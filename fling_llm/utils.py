@@ -29,7 +29,6 @@ def compile_config(new_config: dict, seed: int) -> dict:
     mp.set_start_method('spawn', force=True)
 
     merged_config = deep_merge_dicts(default_exp_args, new_config)
-    compile_data_augmentation_config(merged_config)
     result_config = EasyDict(merged_config)
 
     # Create logging path and save the compiled config.

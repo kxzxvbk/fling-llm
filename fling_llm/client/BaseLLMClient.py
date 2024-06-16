@@ -73,21 +73,6 @@ class BaseLLMClient:
         if test_dataset is not None:
             self.test_dataset = test_dataset
 
-        self.training_args = TrainingArguments(
-            output_dir=os.path.join(args.others.logging_path, 'server'),
-            evaluation_strategy="no",
-            save_strategy="no",
-            report_to='none',
-            remove_unused_columns=False,
-            per_device_train_batch_size=args.learn.batch_size,
-            per_device_eval_batch_size=2 * args.learn.batch_size,
-            group_by_length=False,
-            dataloader_pin_memory=False,
-        )
-
-        self.trainer = get_trainer(self.args.learn.trainer.name, model, train_dataset=None,
-                              test_dataset=test_dataset, training_args=self.training_args)
-
     def set_fed_keys(self, keys: Iterable) -> None:
         r"""
         Overview:
@@ -128,17 +113,28 @@ class BaseLLMClient:
         partial_dict = {k: state_dict[k] for k in keys}
         return partial_dict
 
-    def train(self, lr, device=None, train_args=None):
+    def train(self, lr, device=None, train_args=None, **hf_args):
         """
         Local training.
         """
+        training_args = TrainingArguments(
+            output_dir=os.path.join(self.args.other.logging_path, 'server'),
+            learning_rate=lr,
+            per_device_train_batch_size=self.args.learn.batch_size,
+            per_device_eval_batch_size=2 * self.args.learn.batch_size,
+            **hf_args,
+        )
+
+        trainer = get_trainer(self.args.learn.trainer.name, self.model, train_dataset=None,
+                              test_dataset=self.test_dataset, training_args=training_args)
+
         if device is not None:
             device_bak = self.device
             self.device = device
         self.model.train()
         self.model.to(self.device)
 
-        res = self.trainer.train()
+        res = trainer.train()
         metrics = res.metrics
 
         # Put the model to cpu after training to save GPU memory.

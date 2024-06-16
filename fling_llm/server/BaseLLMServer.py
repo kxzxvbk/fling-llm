@@ -14,17 +14,13 @@ class BaseLLMServer(BaseServer):
 
     def __init__(self, args: Dict, test_dataset: Dataset):
         super(BaseLLMServer, self).__init__(args, test_dataset)
+        self.args = args
         self.test_dataset = test_dataset
         self.training_args = TrainingArguments(
             output_dir=os.path.join(args.other.logging_path, 'server'),
-            evaluation_strategy="no",
-            save_strategy="no",
-            report_to='none',
-            remove_unused_columns=False,
             per_device_train_batch_size=args.learn.batch_size,
             per_device_eval_batch_size=2 * args.learn.batch_size,
-            group_by_length=False,
-            dataloader_pin_memory=False,
+            **args.learn.hf_args
         )
 
     def test(self, model, test_dataset=None):

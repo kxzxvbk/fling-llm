@@ -38,7 +38,7 @@ setup(
     keywords='Federated Learning, Large Language Model',
     packages=[
         *find_packages(include=('fling_llm', 'fling_llm.*')),
-        *find_packages(include=('fling_llm', 'fling_llm.*')),
+        *find_packages(include=('zoo', 'zoo.*')),
     ],
     package_data={
         package_name: ['*.yaml', '*.xml', '*cfg', '*SC2Map']
