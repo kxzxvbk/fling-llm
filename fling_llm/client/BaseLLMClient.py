@@ -1,7 +1,8 @@
 import copy
+import os
 import random
+from typing import Iterable
 
-import torch
 from torch.utils.data import Dataset
 import torch.nn as nn
 
@@ -9,6 +10,7 @@ from fling.utils import get_optimizer, VariableMonitor, get_weights
 from fling.utils.registry_utils import CLIENT_REGISTRY
 
 from fling_llm.client.trainer import get_trainer
+from transformers import TrainingArguments
 
 
 @CLIENT_REGISTRY.register('base_llm_client')

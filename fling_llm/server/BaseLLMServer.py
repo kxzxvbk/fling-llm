@@ -16,7 +16,7 @@ class BaseLLMServer(BaseServer):
         super(BaseLLMServer, self).__init__(args, test_dataset)
         self.test_dataset = test_dataset
         self.training_args = TrainingArguments(
-            output_dir=os.path.join(args.others.logging_path, 'server'),
+            output_dir=os.path.join(args.other.logging_path, 'server'),
             evaluation_strategy="no",
             save_strategy="no",
             report_to='none',
