@@ -2,7 +2,7 @@ from datasets import load_dataset
 from torch.utils.data import Dataset
 from fling.utils.registry_utils import DATASET_REGISTRY
 
-from core.model import export_hf_tokenizer
+from fling_llm.model import export_hf_tokenizer
 
 
 @DATASET_REGISTRY.register('shakespear')

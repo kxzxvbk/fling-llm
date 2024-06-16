@@ -8,6 +8,8 @@ import torch.nn as nn
 from fling.utils import get_optimizer, VariableMonitor, get_weights
 from fling.utils.registry_utils import CLIENT_REGISTRY
 
+from fling_llm.client.trainer import get_trainer
+
 
 @CLIENT_REGISTRY.register('base_llm_client')
 class BaseLLMClient:
@@ -69,6 +71,21 @@ class BaseLLMClient:
         if test_dataset is not None:
             self.test_dataset = test_dataset
 
+        self.training_args = TrainingArguments(
+            output_dir=os.path.join(args.others.logging_path, 'server'),
+            evaluation_strategy="no",
+            save_strategy="no",
+            report_to='none',
+            remove_unused_columns=False,
+            per_device_train_batch_size=args.learn.batch_size,
+            per_device_eval_batch_size=2 * args.learn.batch_size,
+            group_by_length=False,
+            dataloader_pin_memory=False,
+        )
+
+        self.trainer = get_trainer(self.args.learn.trainer.name, model, train_dataset=None,
+                              test_dataset=test_dataset, training_args=self.training_args)
+
     def set_fed_keys(self, keys: Iterable) -> None:
         r"""
         Overview:
@@ -119,27 +136,8 @@ class BaseLLMClient:
         self.model.train()
         self.model.to(self.device)
 
-        # Set optimizer, loss function.
-        if train_args is None:
-            weights = self.model.parameters()
-        else:
-            weights = get_weights(self.model, parameter_args=train_args)
-        op = get_optimizer(weights=weights, **self.args.learn.optimizer)
-
-        # Set the loss function.
-        criterion = nn.CrossEntropyLoss()
-
-        monitor = VariableMonitor()
-
-        # Main training loop.
-        for epoch in range(self.args.learn.local_eps):
-            for _, data in enumerate(self.train_dataloader):
-                preprocessed_data = self.preprocess_data(data)
-                # Update total sample number.
-                self.train_step(batch_data=preprocessed_data, criterion=criterion, monitor=monitor, optimizer=op)
-
-        # Calculate the mean metrics.
-        mean_monitor_variables = monitor.variable_mean()
+        res = self.trainer.train()
+        metrics = res.metrics
 
         # Put the model to cpu after training to save GPU memory.
         self.model.to('cpu')
@@ -147,60 +145,10 @@ class BaseLLMClient:
         if device is not None:
             self.device = device_bak
 
-        return mean_monitor_variables
+        return metrics
 
     def finetune(self, lr, finetune_args, device=None, finetune_eps=None, override=False):
-        """
-        Finetune function. In this function, the local model will not be changed, but will return the finetune results.
-        """
-        # Back-up variables.
-        if device is not None:
-            device_bak = self.device
-            self.device = device
-        if not override:
-            model_bak = copy.deepcopy(self.model)
-
-        # Get default ``finetune_eps``.
-        if finetune_eps is None:
-            finetune_eps = self.args.learn.local_eps
-
-        self.model.train()
-        self.model.to(self.device)
-
-        # Get weights to be fine-tuned.
-        # For calculating train loss and train acc.
-        weights = get_weights(self.model, parameter_args=finetune_args)
-
-        # Get optimizer and loss.
-        op = get_optimizer(weights=weights, **self.args.learn.optimizer)
-        criterion = nn.CrossEntropyLoss()
-
-        # Main loop.
-        info = []
-        for epoch in range(finetune_eps):
-            self.model.train()
-            self.model.to(self.device)
-            monitor = VariableMonitor()
-            for _, data in enumerate(self.train_dataloader):
-                preprocessed_data = self.preprocess_data(data)
-                # Update total sample number.
-                self.finetune_step(batch_data=preprocessed_data, criterion=criterion, monitor=monitor, optimizer=op)
-
-            # Test model every epoch.
-            mean_monitor_variables = monitor.variable_mean()
-            mean_monitor_variables.update(self.test())
-            info.append(mean_monitor_variables)
-
-        # Retrieve the back-up variables.
-        if not override:
-            self.model = model_bak
-        else:
-            # Put the model to cpu after training to save GPU memory.
-            self.model.to('cpu')
-        if device is not None:
-            self.device = device_bak
-
-        return info
+        raise NotImplementedError()
 
     def test(self):
         """
@@ -212,17 +160,9 @@ class BaseLLMClient:
         criterion = nn.CrossEntropyLoss()
         monitor = VariableMonitor()
 
-        # Main test loop.
-        with torch.no_grad():
-            for _, data in enumerate(self.test_dataloader):
-                preprocessed_data = self.preprocess_data(data)
-                # Update total sample number.
-                self.test_step(batch_data=preprocessed_data, criterion=criterion, monitor=monitor)
-
-        # Calculate the mean metrics.
-        mean_monitor_variables = monitor.variable_mean()
+        res = self.trainer.evaluate()
 
         # Put the model to cpu after training to save GPU memory.
         self.model.to('cpu')
 
-        return mean_monitor_variables
+        return res

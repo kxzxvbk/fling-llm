@@ -6,7 +6,7 @@ from transformers import TrainingArguments
 from fling.utils.registry_utils import SERVER_REGISTRY
 from fling.component.server import BaseServer
 
-from core.client.trainer import get_trainer
+from fling_llm.client.trainer import get_trainer
 
 
 @SERVER_REGISTRY.register('base_llm_server')
