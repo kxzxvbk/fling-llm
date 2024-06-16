@@ -13,7 +13,8 @@ default_exp_args = dict(
         # Learning rate scheduler. For each global epoch, use a dynamic learning rate.
         scheduler=dict(
             # Default to be "fix", which means learning rate used in each global epoch is identical.
-            name='fix'
+            name='fix',
+            base_lr=5e-5
         ),
         hf_args=dict(
             group_by_length=False,
