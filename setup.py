@@ -46,7 +46,7 @@ setup(
     },
     python_requires=">=3.7",
     install_requires=[
-        'Fling>=0.0.4', 'transformers', 'datasets', 'accelerate'
+        'Fling>=0.0.5', 'transformers', 'datasets', 'accelerate'
     ],
     extras_require={
         'test': [
