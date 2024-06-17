@@ -22,8 +22,9 @@ class BaseLLMClient:
         If users want to define a new client class, it is recommended to inherit this class.
     """
 
-    def __init__(self, args: dict, model: torch.nn.Module,
-                 client_id: int, train_dataset: Dataset, test_dataset: Dataset = None):
+    def __init__(
+        self, args: dict, model: torch.nn.Module, client_id: int, train_dataset: Dataset, test_dataset: Dataset = None
+    ):
         """
         Overview:
             Initializing train dataset, test dataset (for personalized settings).
@@ -111,8 +112,7 @@ class BaseLLMClient:
         partial_dict = {k: state_dict[k] for k in keys}
         return partial_dict
 
-    def train(self, lr: float, device: Optional[str] = None,
-              train_args: Optional[Dict] = None, **hf_args) -> Dict:
+    def train(self, lr: float, device: Optional[str] = None, train_args: Optional[Dict] = None, **hf_args) -> Dict:
         """
         Overview:
             Local training process.
@@ -133,8 +133,13 @@ class BaseLLMClient:
         )
 
         # Construct trainer using arguments, dataset and model.
-        trainer = get_trainer(self.args.learn.trainer.name, self.model, train_dataset=self.train_dataset,
-                              test_dataset=None, training_args=training_args)
+        trainer = get_trainer(
+            self.args.learn.trainer.name,
+            self.model,
+            train_dataset=self.train_dataset,
+            test_dataset=None,
+            training_args=training_args
+        )
 
         # Set the model for training stage.
         if device is not None:
@@ -173,8 +178,13 @@ class BaseLLMClient:
         )
 
         # Construct trainer using arguments, dataset and model.
-        trainer = get_trainer(self.args.learn.trainer.name, self.model, train_dataset=None,
-                              test_dataset=self.dataset, training_args=training_args)
+        trainer = get_trainer(
+            self.args.learn.trainer.name,
+            self.model,
+            train_dataset=None,
+            test_dataset=self.dataset,
+            training_args=training_args
+        )
 
         # Set the model for testing stage.
         self.model.eval()

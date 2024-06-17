@@ -26,7 +26,4 @@ class ShakespearDataset(Dataset):
         text = self.data['Text'][idx]
         encoded_text = self.tokenizer.encode(text, max_length=self.max_len, truncation=True, add_special_tokens=True)
         encoded_text.append(self.tokenizer.eos_token_id)
-        return {
-            'input_ids': torch.tensor(encoded_text),
-            'labels': torch.tensor(encoded_text)
-        }
+        return {'input_ids': torch.tensor(encoded_text), 'labels': torch.tensor(encoded_text)}

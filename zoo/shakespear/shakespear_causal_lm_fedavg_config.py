@@ -2,13 +2,17 @@ from easydict import EasyDict
 
 exp_args = dict(
     data=dict(
-        dataset='shakespear', data_path='Trelis/tiny-shakespeare',
+        dataset='shakespear',
+        data_path='Trelis/tiny-shakespeare',
         tokenizer='openai-community/gpt2',
         max_len=512,
         sample_method=dict(name='iid', train_num=100, test_num=20)
     ),
     learn=dict(
-        device='cuda:0', local_eps=5, global_eps=40, batch_size=32,
+        device='cuda:0',
+        local_eps=5,
+        global_eps=40,
+        batch_size=32,
         trainer=dict(name='sft_fedavg_trainer'),
     ),
     model=dict(

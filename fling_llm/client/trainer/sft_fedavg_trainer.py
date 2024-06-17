@@ -1,5 +1,6 @@
 from typing import Union, Tuple
 
+import torch
 from transformers import Trainer
 
 
@@ -8,6 +9,7 @@ class SFTFedAvgTrainer(Trainer):
     Overview:
         This trainer is used for Supervised Fine-tuning.
     """
+
     def __init__(self, *args, **kwargs):
         super(SFTFedAvgTrainer, self).__init__(*args, **kwargs)
 

@@ -42,8 +42,10 @@ def collate_fn(batch: List) -> Dict[str, torch.Tensor]:
     return {"input_ids": sequences_padded, "labels": labels_padded}
 
 
-def get_trainer(name: str, model: torch.nn.Module, train_dataset: Optional[Dataset],
-                test_dataset: Optional[Dataset], training_args: transformers.TrainingArguments, **kwargs) -> Trainer:
+def get_trainer(
+        name: str, model: torch.nn.Module, train_dataset: Optional[Dataset], test_dataset: Optional[Dataset],
+        training_args: transformers.TrainingArguments, **kwargs
+) -> Trainer:
     """
     Overview:
         Construct the trainer given required inputs.

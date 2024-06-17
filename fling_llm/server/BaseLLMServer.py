@@ -30,8 +30,13 @@ class BaseLLMServer(BaseServer):
         if test_dataset is None:
             test_dataset = self.test_dataset
 
-        trainer = get_trainer(self.args.learn.trainer.name, model, train_dataset=None,
-                              test_dataset=test_dataset, training_args=self.training_args)
+        trainer = get_trainer(
+            self.args.learn.trainer.name,
+            model,
+            train_dataset=None,
+            test_dataset=test_dataset,
+            training_args=self.training_args
+        )
 
         eval_res = trainer.evaluate(test_dataset)
         model.to('cpu')
