@@ -1,15 +1,13 @@
-import copy
 import os
-import torch
+import copy
 
+import torch
 from fling.component.client import get_client
 from fling.component.server import get_server
 from fling.component.group import get_group
 from fling.dataset import get_dataset
-
 from fling.utils.data_utils import data_sampling
-from fling.utils import Logger, client_sampling, VariableMonitor, LRScheduler
-from fling.utils import get_launcher
+from fling.utils import Logger, client_sampling, VariableMonitor, LRScheduler, get_launcher
 
 from fling_llm.model import export_hf_model
 from fling_llm.utils import compile_config
@@ -40,7 +38,8 @@ def generic_model_pipeline(args: dict, seed: int = 0) -> None:
     group = get_group(args, logger)
     group.server = get_server(args, test_dataset=test_set)
 
-    model = export_hf_model(args.model, pretrained=True)
+    # Initialize the model using args.
+    model = export_hf_model(args.model)
 
     for i in range(args.client.client_num):
         group.append(get_client(args=args, model=copy.deepcopy(model), client_id=i, train_dataset=train_sets[i]))

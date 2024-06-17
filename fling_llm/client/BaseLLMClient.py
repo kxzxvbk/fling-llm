@@ -1,36 +1,35 @@
-import copy
 import os
+import copy
 import random
-from typing import Iterable
+from typing import Iterable, Optional, Dict
 
+import torch.nn
 from torch.utils.data import Dataset
-import torch.nn as nn
-
-from fling.utils import get_optimizer, VariableMonitor, get_weights
+from transformers import TrainingArguments
 from fling.utils.registry_utils import CLIENT_REGISTRY
 
 from fling_llm.client.trainer import get_trainer
-from transformers import TrainingArguments
 
 
 @CLIENT_REGISTRY.register('base_llm_client')
 class BaseLLMClient:
     """
     Overview:
-    This class is the base implementation of client in Federated Learning.
-    Typically, a client need to have these functions.
-    ``train``: A client need to define the local training process.
-    ``test``: A client need to define how to test the local model given a dataset.
-    ``finetune``: A client need to define how to finetune the local model (usually used in Personalized FL)
-    If users want to define a new client class, it is recommended to inherit this class.
+        This class is the base implementation of LLM client in Federated Learning.
+        Typically, a client need to have these functions.
+        - ``train``: A client need to define the local training process.
+        - ``test``: A client need to define how to test the local model given a dataset.
+        If users want to define a new client class, it is recommended to inherit this class.
     """
 
-    def __init__(self, args: dict, model, client_id: int, train_dataset: Dataset, test_dataset: Dataset = None):
+    def __init__(self, args: dict, model: torch.nn.Module,
+                 client_id: int, train_dataset: Dataset, test_dataset: Dataset = None):
         """
         Overview:
-            Initializing train dataset, test dataset(for personalized settings).
+            Initializing train dataset, test dataset (for personalized settings).
         Arguments:
             - args: dict type arguments.
+            - model: The LLM initialized by the server.
             - train_dataset: private dataset for training
             - test_dataset: private dataset for testing (Optional)
             - client_id: unique id for this client.
@@ -70,11 +69,10 @@ class BaseLLMClient:
             self.train_dataset = real_train
             self.val_dataset = real_test
 
-        if test_dataset is not None:
-            self.test_dataset = test_dataset
+        self.test_dataset = test_dataset
 
     def set_fed_keys(self, keys: Iterable) -> None:
-        r"""
+        """
         Overview:
             Set `self.fed_dict` to determine which parameters should be aggregated.
         Arguments:
@@ -85,7 +83,7 @@ class BaseLLMClient:
         self.fed_keys = list(keys)
 
     def update_model(self, dic: dict) -> None:
-        r"""
+        """
         Overview:
             Update the state_dict of the local model of this client.
             For keys not existed in the argument `dic`, the value will be retained.
@@ -101,7 +99,7 @@ class BaseLLMClient:
         self.model.load_state_dict(state_dict)
 
     def get_state_dict(self, keys: Iterable) -> dict:
-        r"""
+        """
         Overview:
             Get the parameter diction of local model.
         Arguments:
@@ -113,10 +111,19 @@ class BaseLLMClient:
         partial_dict = {k: state_dict[k] for k in keys}
         return partial_dict
 
-    def train(self, lr, device=None, train_args=None, **hf_args):
+    def train(self, lr: float, device: Optional[str] = None,
+              train_args: Optional[Dict] = None, **hf_args) -> Dict:
         """
-        Local training.
+        Overview:
+            Local training process.
+        Arguments:
+            - lr: Learning rate in this training round.
+            - device: The device to run on.
+            - train_args: Only a place-holder. No use currently.
+        Returns:
+            - metrics: The calculated training metrics.
         """
+        # Set up training arguments.
         training_args = TrainingArguments(
             output_dir=os.path.join(self.args.other.logging_path, 'server'),
             learning_rate=lr,
@@ -125,21 +132,23 @@ class BaseLLMClient:
             **hf_args,
         )
 
-        trainer = get_trainer(self.args.learn.trainer.name, self.model, train_dataset=None,
-                              test_dataset=self.test_dataset, training_args=training_args)
+        # Construct trainer using arguments, dataset and model.
+        trainer = get_trainer(self.args.learn.trainer.name, self.model, train_dataset=self.train_dataset,
+                              test_dataset=None, training_args=training_args)
 
+        # Set the model for training stage.
         if device is not None:
             device_bak = self.device
             self.device = device
         self.model.train()
         self.model.to(self.device)
 
+        # Train the model and get metrics.
         res = trainer.train()
         metrics = res.metrics
 
         # Put the model to cpu after training to save GPU memory.
         self.model.to('cpu')
-
         if device is not None:
             self.device = device_bak
 
@@ -148,19 +157,33 @@ class BaseLLMClient:
     def finetune(self, lr, finetune_args, device=None, finetune_eps=None, override=False):
         raise NotImplementedError()
 
-    def test(self):
+    def test(self, **hf_args) -> Dict:
         """
-        Test model.
+        Overview:
+            Local training process.
+        Returns:
+            - metrics: The calculated evaluation metrics.
         """
+        # Set up training arguments.
+        training_args = TrainingArguments(
+            output_dir=os.path.join(self.args.other.logging_path, 'server'),
+            per_device_train_batch_size=self.args.learn.batch_size,
+            per_device_eval_batch_size=2 * self.args.learn.batch_size,
+            **hf_args,
+        )
+
+        # Construct trainer using arguments, dataset and model.
+        trainer = get_trainer(self.args.learn.trainer.name, self.model, train_dataset=None,
+                              test_dataset=self.dataset, training_args=training_args)
+
+        # Set the model for testing stage.
         self.model.eval()
         self.model.to(self.device)
 
-        criterion = nn.CrossEntropyLoss()
-        monitor = VariableMonitor()
-
-        res = self.trainer.evaluate()
+        # Evaluate the model and get metrics.
+        metrics = trainer.evaluate()
 
         # Put the model to cpu after training to save GPU memory.
         self.model.to('cpu')
 
-        return res
+        return metrics

@@ -13,6 +13,7 @@ exp_args = dict(
     ),
     model=dict(
         model_path='openai-community/gpt2',
+        pretrained=True,
     ),
     client=dict(name='base_llm_client', client_num=10),
     server=dict(name='base_llm_server'),
