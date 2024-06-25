@@ -32,7 +32,7 @@ exp_args = dict(
         # Check whether your machine support this.
         # attn_implementation="flash_attention_2"
     ),
-    client=dict(name='base_llm_client', client_num=10),
+    client=dict(name='base_llm_client', client_num=5),
     server=dict(name='base_llm_server'),
     group=dict(name='base_group', aggregation_method='avg'),
     other=dict(test_freq=1, logging_path='./logging/alpaca_fedavg_llama2_7b')
