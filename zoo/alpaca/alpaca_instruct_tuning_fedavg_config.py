@@ -29,7 +29,8 @@ exp_args = dict(
         trust_remote_code=True,
         revision='main',
         torch_dtype=torch.bfloat16,
-        attn_implementation="flash_attention_2"
+        # Check whether your machine support this.
+        # attn_implementation="flash_attention_2"
     ),
     client=dict(name='base_llm_client', client_num=10),
     server=dict(name='base_llm_server'),

@@ -2,6 +2,7 @@ from torch.utils.data import Dataset
 
 
 class CyclingDataset(Dataset):
+
     def __init__(self, data: Dataset):
         self.data = data
         self.start_idx = 0
