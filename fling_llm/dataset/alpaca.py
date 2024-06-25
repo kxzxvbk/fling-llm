@@ -16,11 +16,16 @@ class AlpacaDataset(Dataset):
 
     def __init__(self, cfg: dict, train: bool):
         self.tokenizer = export_hf_tokenizer(cfg.data.tokenizer)
-        self.data = load_dataset(cfg.data.data_path, split='train' if train else 'test')
+        self.data = load_dataset(cfg.data.data_path, split='train')
+        train_len = int(0.9 * len(self.data))
+        if train:
+            self.data = self.data[:train_len]
+        else:
+            self.data = self.data[train_len:]
         self.max_len = cfg.data.max_len
 
     def __len__(self):
-        return len(self.data)
+        return len(self.data['instruction'])
 
     def __getitem__(self, idx):
         instruction = self.data['instruction'][idx].strip()

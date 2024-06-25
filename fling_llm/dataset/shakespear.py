@@ -20,7 +20,7 @@ class ShakespearDataset(Dataset):
         self.max_len = cfg.data.max_len
 
     def __len__(self):
-        return len(self.data)
+        return len(self.data['Text'])
 
     def __getitem__(self, idx):
         text = self.data['Text'][idx]

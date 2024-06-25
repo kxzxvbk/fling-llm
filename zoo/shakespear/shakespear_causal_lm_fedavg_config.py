@@ -6,7 +6,7 @@ exp_args = dict(
         data_path='Trelis/tiny-shakespeare',
         tokenizer='openai-community/gpt2',
         max_len=512,
-        sample_method=dict(name='iid', train_num=100, test_num=20)
+        sample_method=dict(name='uniform', train_num=0, test_num=0)
     ),
     learn=dict(
         device='cuda:0',
