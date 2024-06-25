@@ -36,7 +36,7 @@ pip install -e .
 After successfully installing Fling-llm, users can start the first experiment by using the following command. An example for generic federated learning:
 
 ```bash
-python zoo/shakespear/shakespear_causal_lm_fedavg_config.py
+python zoo/shakespear/alpaca_instruct_tuning_fedavg_config.py
 ```
 
 This config is a simplified version for conducting FedAvg on the Shakespeare dataset for SFT training, and iterates for 4 communication rounds.

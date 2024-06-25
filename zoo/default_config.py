@@ -25,6 +25,9 @@ default_exp_args = dict(
         device='cuda:0',
         # Number of local epochs in each training round of each client.
         local_eps=5,
+        # Number of local iterations. Default is -1, which means local iterations is ``local_eps`` * num_per_epoch.
+        # If not -1, this will override ``local_eps``.
+        local_iters=-1,
         # Number of global epochs (training rounds) in the total FL process.
         global_eps=40,
         # Batch size for local training. Testing batch size is 2 times as large as this value

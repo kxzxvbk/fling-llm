@@ -9,6 +9,7 @@ from transformers import TrainingArguments
 from fling.utils.registry_utils import CLIENT_REGISTRY
 
 from fling_llm.client.trainer import get_trainer
+from fling_llm.dataset import CyclingDataset
 
 
 @CLIENT_REGISTRY.register('base_llm_client')
@@ -71,6 +72,7 @@ class BaseLLMClient:
             self.val_dataset = real_test
 
         self.test_dataset = test_dataset
+        self.train_dataset = CyclingDataset(self.train_dataset)
 
     def set_fed_keys(self, keys: Iterable) -> None:
         """
@@ -123,8 +125,17 @@ class BaseLLMClient:
         Returns:
             - metrics: The calculated training metrics.
         """
+        # Prepare the dataset using current arguments.
+        if self.args.learn.local_iters == -1:
+            iters_per_epoch = len(self.train_dataset.data) // self.args.learn.batch_size
+            num_iters = iters_per_epoch * self.args.learn.local_eps
+        else:
+            num_iters = self.args.learn.local_iters
+        self.train_dataset.update(num_iters)
+
         # Set up training arguments.
         training_args = TrainingArguments(
+            num_train_epochs=1,
             output_dir=os.path.join(self.args.other.logging_path, 'server'),
             learning_rate=lr,
             per_device_train_batch_size=self.args.learn.batch_size,
