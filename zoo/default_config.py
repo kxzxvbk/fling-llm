@@ -61,6 +61,7 @@ default_exp_args = dict(
         model_path='openai-community/gpt2',
         # Whether to load pretrained parameters.
         pretrained=True,
+        peft_config=dict(name=None)
     ),
     # Configurations for client.
     client=dict(

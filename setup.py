@@ -45,7 +45,7 @@ setup(
         for package_name in find_packages(include='fling.*')
     },
     python_requires=">=3.7",
-    install_requires=['Fling>=0.0.5', 'transformers', 'datasets', 'accelerate'],
+    install_requires=['Fling>=0.0.5', 'transformers', 'datasets', 'accelerate', 'peft'],
     extras_require={
         'test': [
             'coverage>=5,<=7.0.1',
