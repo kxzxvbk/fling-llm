@@ -39,8 +39,9 @@ def generic_model_pipeline(args: dict, seed: int = 0) -> None:
     group.server = get_server(args, test_dataset=test_set)
 
     # Initialize the model using args.
+    peft_config = args.model.pop('peft_config')
     model = export_hf_model(args.model)
-    model = add_wrapper(model, args.model.peft_config)
+    model = add_wrapper(model, **peft_config)
 
     for i in range(args.client.client_num):
         group.append(get_client(args=args, model=copy.deepcopy(model), client_id=i, train_dataset=train_sets[i]))
